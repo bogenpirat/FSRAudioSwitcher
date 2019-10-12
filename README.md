@@ -1,6 +1,6 @@
 # FSRAudioSwitcher
 
-!(FSRAudioSwitcher demo animation)[/demo/demo-animation.gif]
+![FSRAudioSwitcher demo animation](/demo/demo-animation.gif)
 
 picture this: you have two separate audio output devices on your computer - speakers and a pair of headphones. modern audio drivers allow you to attach these two devices to different audio ports on your computer (back plate and front i/o) and have them show up as separate, selectable devices in windows.
 
