@@ -1,5 +1,7 @@
 # FSRAudioSwitcher
 
+![FSRAudioSwitcher demo animation)[/demo/demo-animation.gif]
+
 picture this: you have two separate audio output devices on your computer - speakers and a pair of headphones. modern audio drivers allow you to attach these two devices to different audio ports on your computer (back plate and front i/o) and have them show up as separate, selectable devices in windows.
 
 that in turn makes it possible to switch between these devices via software - by clicking the loudspeaker icon in the windows tray bar and selecting the one you'd like to set as the default output device.
@@ -61,6 +63,6 @@ note that you can also change the delay between measurements, but be advised tha
 
 here's a quick schematic on how to connect the voltage divider circuit. ports to the left connect to the arduino.
 
-![](https://i.imgur.com/YPe399J.png)
+![FSR/arduino circuit](/demo/circuit.png)
 
 for the FSR, i used an FSR-406 off amazon. my microcontroller is a cheap 6€ arduino uno clone off ebay. it is connected via usb to the computer.
