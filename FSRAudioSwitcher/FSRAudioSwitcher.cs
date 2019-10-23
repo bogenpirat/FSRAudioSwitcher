@@ -20,7 +20,7 @@ namespace  FSRAudioSwitcher {
         private readonly Icon offIcon = new Icon(Resources.speakerOff, 40, 40);
 
         DevicePicker _devicePicker;
-        ThresholdPicker _thresholdPicker;
+        volatile ThresholdPicker _thresholdPicker;
         ComPortPicker _comPortPicker;
 
         public FSRAudioSwitcher()
@@ -49,6 +49,8 @@ namespace  FSRAudioSwitcher {
         static bool _continue;
         static SerialPort _serialPort;
         static int _currentMeasurement;
+
+        delegate void SafeCallDelegate(int measurement);
 
         public static string _portName { get; set; }
         public static int _threshold { get; set; }
@@ -79,24 +81,12 @@ namespace  FSRAudioSwitcher {
             _portName = GetPortName(Settings.Default.comPortName);
             application.SaveSettings();
             
-            _serialPort.PortName = _portName;
             _serialPort.BaudRate = 9600;
 
             // Set the read/write timeouts
             _serialPort.ReadTimeout = 2000;
             _serialPort.WriteTimeout = 2000;
         
-            // open the port; start reading loop
-            try
-            {
-                _serialPort.Open();
-            }
-            catch (Exception)
-            {
-                MessageBox.Show("No COM ports available. Attach the hardware.");
-                Application.Exit();
-                return;
-            }
             readThread.Start();
 
             Application.Run(application);
@@ -118,7 +108,20 @@ namespace  FSRAudioSwitcher {
          */
         public void COMRead()
         {
-            while(_continue)
+            _serialPort.PortName = _portName;
+            // open the port; start reading loop
+            try
+            {
+                _serialPort.Open();
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("No COM ports available. Attach the hardware.");
+                Application.Exit();
+                return;
+            }
+
+            while (_continue)
             {
                 try
                 {
@@ -133,6 +136,7 @@ namespace  FSRAudioSwitcher {
                     int currResistance = Int32.Parse(message);
 
                     _currentMeasurement = currResistance;
+                    SetCurrentMeasurementField(_currentMeasurement);
                     //Console.WriteLine("resistance: {0}", currResistance);
 
                     if (_doHandleSwitching) {
@@ -154,10 +158,26 @@ namespace  FSRAudioSwitcher {
                 {
                     Console.WriteLine("Couldn't parse resistance value into an integer.");
                 }
-                catch(System.InvalidOperationException)
+                catch(InvalidOperationException)
                 {
                     Console.WriteLine("COM port is not accessible");
                     return;
+                }
+            }
+        }
+
+        private void SetCurrentMeasurementField(int currentMeasurement)
+        {
+            if (_thresholdPicker != null)
+            {
+                var field = _thresholdPicker.GetCurrentMeasurementField();
+                if (field.InvokeRequired)
+                {
+                    var d = new SafeCallDelegate(SetCurrentMeasurementField);
+                    field.Invoke(d, new object[] { _currentMeasurement });
+                } else
+                {
+                    field.Text = _currentMeasurement + "";
                 }
             }
         }

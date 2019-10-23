@@ -19,7 +19,7 @@ namespace FSRAudioSwitcher
             _parentApp = parentApp;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void Button1_Click(object sender, EventArgs e)
         {
             this.Dispose();
             this.Close();
@@ -30,13 +30,31 @@ namespace FSRAudioSwitcher
             thresholdNumber.Value = FSRAudioSwitcher._threshold;
         }
 
-        private void okButton_Click(object sender, EventArgs e)
+        private void OkButton_Click(object sender, EventArgs e)
         {
             FSRAudioSwitcher._threshold = Convert.ToInt32(thresholdNumber.Value);
             _parentApp.SaveSettings();
 
             this.Dispose();
             this.Close();
+        }
+
+        private void PickButton_Click(object sender, EventArgs e)
+        {
+            if(CurrentMeasurementBox.Text.Length > 0)
+            {
+                thresholdNumber.Value = Convert.ToDecimal(CurrentMeasurementBox.Text) * ((decimal)1.20);
+            }
+        }
+
+        private void CurrentMeasurementBox_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        public TextBox GetCurrentMeasurementField()
+        {
+            return CurrentMeasurementBox;
         }
     }
 }
