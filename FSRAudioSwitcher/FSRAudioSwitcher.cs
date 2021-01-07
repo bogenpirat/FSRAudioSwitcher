@@ -35,6 +35,7 @@ namespace  FSRAudioSwitcher {
             _headphones = Settings.Default.headphonesName;
             _headphonesID = Settings.Default.headphonesID;
             _doHandleSwitching = Settings.Default.doHandleSwitching;
+            _useVoiceMeeter = Settings.Default.useVoiceMeeter;
 
             trayMenu = new ContextMenu();
             trayIcon = new NotifyIcon();
@@ -60,6 +61,7 @@ namespace  FSRAudioSwitcher {
         public static string _headphonesID { get; set; }
         public static string _currentAudioDevice;
         public static string _currentAudioDeviceID;
+        public bool _useVoiceMeeter { get; set; }
         static bool _doHandleSwitching;
 
         [STAThread]
@@ -71,8 +73,15 @@ namespace  FSRAudioSwitcher {
             UpdateCurrentDefaultAudioDevice();
 
             FSRAudioSwitcher application = new FSRAudioSwitcher();
-            
-            Thread readThread = new Thread(application.COMRead);
+
+            // connect to voicemeeter
+            if (application._useVoiceMeeter)
+            {
+                long ret = VBVMR_Login();
+                Console.WriteLine("vbvmr login " + (ret <= 1 ? "successful" : "failed" + ret));
+            }
+
+                Thread readThread = new Thread(application.COMRead);
 
             // Create a new SerialPort object with default settings.
             _serialPort = new SerialPort();
@@ -93,6 +102,13 @@ namespace  FSRAudioSwitcher {
 
             readThread.Join();
             _serialPort.Close();
+
+            // connect to voicemeeter
+            if (application._useVoiceMeeter)
+            {
+                long ret = VBVMR_Logout();
+                Console.WriteLine("vbvmr logout " + (ret == 0 ? "successful" : "failed" + ret) );
+            }
         }
 
         /**
@@ -140,13 +156,33 @@ namespace  FSRAudioSwitcher {
                     //Console.WriteLine("resistance: {0}", currResistance);
 
                     if (_doHandleSwitching) {
-                        if (currResistance < _threshold && _currentAudioDeviceID != _speakersID)
+                        if (_useVoiceMeeter)
                         {
-                            AudioSwitch(_speakersID);
+                            if (currResistance < _threshold)
+                            {
+                                VBVMR_SetParameters("Strip[3].A1 = 1" + "\n"
+                                                  + "Strip[3].A2 = 0" + "\n"
+                                                  + "Strip[4].A1 = 1" + "\n"
+                                                  + "Strip[4].A2 = 0");
+                            }
+                            else
+                            {
+                                VBVMR_SetParameters("Strip[3].A1 = 0" + "\n"
+                                                  + "Strip[3].A2 = 1" + "\n"
+                                                  + "Strip[4].A1 = 0" + "\n"
+                                                  + "Strip[4].A2 = 1");
+                            }
                         }
-                        else if(currResistance >= _threshold && _currentAudioDeviceID != _headphonesID)
+                        else
                         {
-                            AudioSwitch(_headphonesID);
+                            if (currResistance < _threshold && _currentAudioDeviceID != _speakersID)
+                            {
+                                AudioSwitch(_speakersID);
+                            }
+                            else if(currResistance >= _threshold && _currentAudioDeviceID != _headphonesID)
+                            {
+                                AudioSwitch(_headphonesID);
+                            }
                         }
                     }
                 }
@@ -208,6 +244,21 @@ namespace  FSRAudioSwitcher {
 
         [DllImport("EndPointController.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "ChangeAudioDeviceByID", CharSet = CharSet.Unicode)]
         static extern void ChangeAudioDeviceByID(StringBuilder DevID);
+
+
+
+        [DllImport("VoicemeeterRemote64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "VBVMR_Login")]
+        static extern long VBVMR_Login();
+
+        [DllImport("VoicemeeterRemote64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "VBVMR_Logout")]
+        static extern long VBVMR_Logout();
+
+        [DllImport("VoicemeeterRemote64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "VBVMR_SetParameters", CharSet = CharSet.Unicode)]
+        static extern long VBVMR_SetParameters(string szParamScript);
+
+        [DllImport("VoicemeeterRemote64.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "VBVMR_GetParameterFloat", CharSet = CharSet.Unicode)]
+        static extern int VBVMR_GetParameterFloat([MarshalAs(UnmanagedType.LPStr)]string szParamName, ref float pValue);
+
 
         /**
          * switches the standard audio device using NirCmd
@@ -394,6 +445,16 @@ namespace  FSRAudioSwitcher {
             };
             trayMenu.MenuItems.Add(_selectSwitchingThresholdItem);
 
+            trayMenu.MenuItems.Add("-");
+            
+            MenuItem _useVoiceMeeterModeItem = new MenuItem { Text = "Use VoiceMeeter mode (requires restart)", Checked = _useVoiceMeeter };
+            _useVoiceMeeterModeItem.Click += delegate (object send, EventArgs ea) {
+                _useVoiceMeeter = !_useVoiceMeeter;
+                _useVoiceMeeterModeItem.Checked = _useVoiceMeeter;
+                SaveSettings();
+            };
+            trayMenu.MenuItems.Add(_useVoiceMeeterModeItem);
+
 
             trayMenu.MenuItems.Add("-");
 
@@ -441,6 +502,7 @@ namespace  FSRAudioSwitcher {
             Settings.Default.speakersID = _speakersID;
             Settings.Default.comPortName = _portName;
             Settings.Default.switchingThreshold = _threshold;
+            Settings.Default.useVoiceMeeter = _useVoiceMeeter;
 
             Settings.Default.Save();
         }

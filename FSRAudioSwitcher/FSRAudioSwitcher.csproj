@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{3BE46577-4698-41F0-ACF5-D8A45BF0D4B1}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <RootNamespace>FSRAudioSwitcher</RootNamespace>
     <AssemblyName>FSRAudioSwitcher</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
@@ -159,12 +159,6 @@
     <None Include="Resources\rectangular-speakers-with-bass.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\EndPointController\EndPointController.vcxproj">
-      <Project>{ca6ea9fe-b049-490c-9203-e65dd13188c7}</Project>
-      <Name>EndPointController</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.6.1">
       <Visible>False</Visible>
       <ProductName>Microsoft .NET Framework 4.6.1 %28x86 and x64%29</ProductName>
@@ -175,6 +169,24 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EndPointController\EndPointController.vcxproj">
+      <Project>{ca6ea9fe-b049-490c-9203-e65dd13188c7}</Project>
+      <Name>EndPointController</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="VoicemeeterRemote.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="VoicemeeterRemote.h" />
+    <Content Include="VoicemeeterRemote64.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
